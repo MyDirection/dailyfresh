@@ -1,0 +1,176 @@
+{% extends 'list_detail_base.html' %}
+{% load static %}
+{% block title%}天天生鲜-详情页{% endblock title %}
+{% block all_goods %}
+    <div class="breadcrumb">
+		<a href="#">全部分类</a>
+		<span>></span>
+		<a href="#">{{ sku.type.name }}</a>
+		<span>></span>
+		<a href="#">商品详情</a>
+	</div>
+
+	<div class="goods_detail_con clearfix">
+		<div class="goods_detail_pic fl"><img src="{{ sku.image.url }}"></div>
+
+		<div class="goods_detail_list fr">
+			<h3>{{ sku.name }}</h3>
+			<p>{{ sku.desc }}</p>
+			<div class="prize_bar">
+				<span class="show_pirze">¥<em>{{ sku.price }}</em></span>
+				<span class="show_unit">单  位：{{ sku.unite }}</span>
+			</div>
+			<div class="goods_num clearfix">
+				<div class="num_name fl">数 量：</div>
+				<div class="num_add fl">
+					<input type="text" class="num_show fl" value="1">
+					<a href="javascript:;" class="add fr">+</a>
+					<a href="javascript:;" class="minus fr">-</a>
+				</div>
+			</div>
+            <span>其他规格：
+                {% for same_spu_sku in same_spu_skus %}
+                    <a href="{% url 'goods:detail' same_spu_sku.id %}">{{ same_spu_sku.name }}</a>
+                {% endfor %}
+
+            </span>
+			<div class="total">总价：<em>{{ sku.price }}元</em></div>
+			<div class="operate_btn">
+				<a href="javascript:;" class="buy_btn">立即购买</a>
+				<a href="javascript:;" class="add_cart" id="add_cart" sku_id="{{ sku.id }}">加入购物车</a>
+			</div>
+		</div>
+    {% csrf_token %}
+    <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+                <script>
+                    ready_num = ''
+                    $('.add').click(function () {
+                        $('.num_show').val(parseInt($('.num_show').val())+1)
+                        // 更新总价
+                        update_price()
+                    })
+
+                    $('.minus').click(function (){
+                        num = parseInt($('.num_show').val())-1
+                        if(num <= 0) {
+                            return
+                        }
+                        $('.num_show').val(num)
+                        // 更新总价
+                        update_price()
+                    })
+
+                    $('.num_show').on('change', function (){
+                        num = $(this).val()
+                        if(isNaN(num)){
+                            $(this).val(ready_num)
+                        }
+                    })
+
+
+                    $('.num_show').on('focus', function () {
+                        ready_num = $(this).val()
+                    })
+
+                    $('.num_show').on('blur', function () {
+                        num = $.trim($(this).val())
+                        if(isNaN(num) || num.length == 0 || parseInt(num) <= 0) {
+                            $(this).val(ready_num)
+                        }
+                        $(this).val(num)
+                        // 更新总价
+                        update_price()
+                    })
+
+                    function update_price() {
+                        // 获取单价
+                        unit_price = parseFloat($('.show_pirze em').html())
+                        // 获取数量
+                        count = parseInt($('.num_show').val())
+                        // 总价
+                        sum = (unit_price * count).toFixed(2)
+                        $('.total em').html(sum + '元')
+                    }
+
+                    $('#add_cart').click(function () {
+                         params = {
+                        "csrfmiddlewaretoken": $('input[name="csrfmiddlewaretoken"]').val(),
+                        "sku_id": $('#add_cart').attr('sku_id'),
+                        "count": $('.num_show').val(),
+                        }
+                        $.post('/cart/add_cart', params, function (data) {
+                            if (data.code == '3'){
+                                $('#show_count').html(data.cart_count)
+                                alert(data.mesg)
+                            }else{
+                                alert(data.err_mesg)
+                            }
+                        })
+                    })
+
+                </script>
+	</div>
+
+	<div class="main_wrap clearfix">
+		<div class="l_wrap fl clearfix">
+			<div class="new_goods">
+				<h3>新品推荐</h3>
+				<ul>
+					{% for rec_goods in recommend_goods %}
+                        <li>
+                            <a href="{% url 'goods:detail' rec_goods.id %}"><img src="{{ rec_goods.image.url }}"></a>
+                            <h4><a href="{% url 'goods:detail' rec_goods.id %}">{{ rec_goods.name }}</a></h4>
+                            <div class="prize">￥{{ rec_goods.price }}</div>
+					    </li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+
+		<div class="r_wrap fr clearfix">
+			<ul class="detail_tab clearfix">
+				<li class="active">商品介绍</li>
+				<li>评论</li>
+			</ul>
+
+			<div class="tab_content">
+				<dl>
+					<dt>商品详情：</dt>
+					<dd>{{ sku.goods.detail }}</dd>
+				</dl>
+			</div>
+
+		</div>
+	</div>
+
+
+{% endblock all_goods %}
+
+{% block bottom %}
+    <div class="add_jump"></div>
+{% endblock bottom %}
+
+{% block bottom_static_files %}
+    <script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+	<script type="text/javascript">
+		var $add_x = $('#add_cart').offset().top;
+		var $add_y = $('#add_cart').offset().left;
+
+		var $to_x = $('#show_count').offset().top;
+		var $to_y = $('#show_count').offset().left;
+
+		$(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
+		$('#add_cart').click(function(){
+			$(".add_jump").stop().animate({
+				'left': $to_y+7,
+				'top': $to_x+7},
+				"fast", function() {
+					$(".add_jump").fadeOut('fast',function(){
+						return
+					});
+			});
+		})
+	</script>
+
+
+{% endblock bottom_static_files %}

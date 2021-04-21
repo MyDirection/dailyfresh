@@ -1,0 +1,59 @@
+{% extends 'list_detail_base.html' %}
+{% block title %}搜索结果页{% endblock title %}
+{% block all_goods %}
+    <div class="breadcrumb">
+		<a href="#">搜索关键字</a>
+		<span>></span>
+		<a href="#">{{ query }}</a>
+	</div>
+    <div class="main_wrap clearfix">
+		<div class="l_wrap fl clearfix">
+			<div class="new_goods">
+				<h3></h3>
+				<ul>
+				</ul>
+			</div>
+		</div>
+		<div class="r_wrap fr clearfix">
+
+			<ul class="goods_type_list clearfix">
+				{% for rel in page %}
+                    <li>
+                        <a href="{% url 'goods:detail' rel.object.id %}"><img src="{{ rel.object.image.url }}"></a>
+                        <h4><a href="../detail.html">{{ rel.object.name }}</a></h4>
+                        <div class="operate">
+                            <span class="prize">￥{{ rel.object.price }}</span>
+                            <span class="unit">{{ rel.object.price }}/{{ rel.object.unite }}</span>
+                            <a href="#" class="add_goods" title="加入购物车"></a>
+                        </div>
+				    </li>
+                {% empty %}
+				    <li>未找到该该关键字的商品</li>
+				{% endfor %}
+			</ul>
+			<div class="pagenation">
+                {% if page.has_previous %}
+				    <a href="#">上一页</a>
+                {% endif %}
+				{% for index in page.paginator.page_range %}
+                    {% if page.number == index %}
+                        <a href="#" class="active" >{{ index }}</a>
+                    {% else %}
+                        <a href="#">{{ index }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if page.has_next %}
+				    <a href="#">下一页></a>
+                {% endif %}
+			</div>
+		</div>
+	</div>
+
+
+
+
+
+
+
+
+{% endblock all_goods %}
