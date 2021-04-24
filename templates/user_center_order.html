@@ -32,11 +32,12 @@
 							    {% else %}
                                     已付款
                                 {% endif %}</td>
-							<td width="15%"><a href="#" class="oper_btn">去付款</a></td>
+							<td width="15%"><a href="#" order_id="{{ order.order_id }}" order_status="{{ order.order_status }}" class="oper_btn">去付款</a></td>
 						</tr>
 					</tbody>
 				</table>
 				{% endfor %}
+                {% csrf_token %}
 				<div class="pagenation">
 					{% if page.has_previous %}
 					    <a href="{% url 'user:order' page.previous_page_number %}">上一页</a>
@@ -52,6 +53,40 @@
                         <a href="{% url 'user:order' page.next_page_number %}">下一页></a>
                     {% endif %}
 				</div>
+            <script src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+            <script>
+                order_id = $('.oper_btn').attr("order_id")
+                csrf = $('input[name="csrfmiddlewaretoken"]').val()
+                params = {
+                    "order_id": order_id,
+                    "csrfmiddlewaretoken": csrf
+                }
+                $(".oper_btn").click(function (){
+                    if ($(this).attr("order_status") == 1){
+                    // 订单支付
+                     $.post("{% url 'order:pay' %}", params, function (data) {
+                        if (data.code == 3){
+                            window.open(data.pay_url)
+                            // 访问支付结果
+                            $.post('{% url "order:check" %}', {"order_id": order_id, "csrfmiddlewaretoken": csrf}, function (dtat) {
+                                if(data.code == 4){
+                                    alert(data.mesg)
+                                    window.ready()
+                                }else {
+                                    alert(data.errmesg)
+                                }
+                            })
+                        }else {
+                            alert(data.errmesg)
+                        }
+                     })
+                    }
+                })
+
+
+
+
+            </script>
 		</div>
 	</div>
 {% endblock right_content  %}

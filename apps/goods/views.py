@@ -7,48 +7,59 @@ from goods.models import GoodsSKU, GoodsType, Goods
 from django_redis import get_redis_connection
 from django.core.paginator import Paginator
 from django.conf import settings
+from django.template import loader
+import os
+from django.core.cache import cache
+
 
 # /index
 class IndexView(View):
     def get(self, request):
         """ 主页面 """
-        user = request.user
-        # 获取所有商品的类型
-        goods_types = GoodsType.objects.all()
-        # 获取所有的轮播的商品
-        index_goods_banners = IndexGoodsBanner.objects.all().order_by("index")
-        # 获取所有促销商品
-        index_promotion_banners = IndexPromotionBanner.objects.all().order_by("index")
+        # 尝试获取缓存
+        context = cache.get('context')
+        if not context:
+            """ 还没有设置缓存"""
+            user = request.user
+            # 获取所有商品的类型
+            goods_types = GoodsType.objects.all()
+            # 获取所有的轮播的商品
+            index_goods_banners = IndexGoodsBanner.objects.all().order_by("index")
+            # 获取所有促销商品
+            index_promotion_banners = IndexPromotionBanner.objects.all().order_by("index")
 
-        # 动态的给type添加属性
-        for goods_type in goods_types:
-            # 获取商品类型的所有title的展示信息
-            title_goods_banners = IndexTypeGoodsBanner.objects.filter(type=goods_type, display_type=0).order_by("index")
-            # 获取商品类型的所有图片的展示信息
-            image_goods_banners = IndexTypeGoodsBanner.objects.filter(type=goods_type, display_type=1).order_by("index")
+            # 动态的给type添加属性
+            for goods_type in goods_types:
+                # 获取商品类型的所有title的展示信息
+                title_goods_banners = IndexTypeGoodsBanner.objects.filter(type=goods_type, display_type=0).order_by("index")
+                # 获取商品类型的所有图片的展示信息
+                image_goods_banners = IndexTypeGoodsBanner.objects.filter(type=goods_type, display_type=1).order_by("index")
 
-            # 动态的添加属性， 添加所有title的展示信息
-            goods_type.title_goods_banners = title_goods_banners
-            # 动态的添加属性 ，添加所有图片的展示信息
-            goods_type.image_goods_banners = image_goods_banners
+                # 动态的添加属性， 添加所有title的展示信息
+                goods_type.title_goods_banners = title_goods_banners
+                # 动态的添加属性 ，添加所有图片的展示信息
+                goods_type.image_goods_banners = image_goods_banners
 
-        # 购物车商品数量
-        cart_count = 0
-        # 判断用户是否登录
-        if user.is_authenticated:
-            con = get_redis_connection("default")
-            # 组织key
-            cart_key = "cart_%d" % user.id
-            cart_count = int(con.hlen(cart_key))
+            # 购物车商品数量
+            cart_count = 0
+            # 判断用户是否登录
+            if user.is_authenticated:
+                con = get_redis_connection("default")
+                # 组织key
+                cart_key = "cart_%d" % user.id
+                cart_count = int(con.hlen(cart_key))
 
-        # 组织模板上下文
-        context = {
-            "goods_types": goods_types,
-            "index_goods_banners": index_goods_banners,
-            "index_promotion_banners": index_promotion_banners,
-            "cart_count": cart_count,
-        }
-        return render(request, "index.html", context)
+            # 组织模板上下文
+            context = {
+                "goods_types": goods_types,
+                "index_goods_banners": index_goods_banners,
+                "index_promotion_banners": index_promotion_banners,
+                "cart_count": cart_count,
+            }
+            # 设置缓存
+            cache.set("context", context, 7*24*60*60)
+            print("设置缓存")
+        return render(request, 'index.html', context)
 
 
 # /detail

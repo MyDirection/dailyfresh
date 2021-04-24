@@ -204,15 +204,10 @@ class OrderView(LoginRequiredMixin, View):
         orders = OrderInfo.objects.filter(user=user).order_by("-create_time")
         for order in orders:
             """ 动态的添加属性"""
-            total_price = 0
             # 根据订单信息查询出商品订单
             order_goods = OrderGoods.objects.filter(order=order)
-            for goods in order_goods:
-                """ 累加总计"""
-                total_price += goods.price
 
             order.order_goods = order_goods
-            order.total_price = total_price
             order.status = OrderInfo.ORDER_STATUS[order.order_status]
 
         p = Paginator(orders, 2)
@@ -220,8 +215,6 @@ class OrderView(LoginRequiredMixin, View):
 
         # 组织模板上下文
         params = {
-            "orders": orders,
-            "page_num": 2,
             "page": page,
         }
         return render(request, "user_center_order.html", params)

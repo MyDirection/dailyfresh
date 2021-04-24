@@ -208,3 +208,9 @@ HAYSTACK_CONNECTIONS = {
 HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 
+# 密钥
+ALIPAY_PUBLIC = os.path.join(BASE_DIR,'apps/order/alipay_public_key.pem')
+APP_PUBLIC = os.path.join(BASE_DIR, 'keys','app_public.txt')
+APP_PRIVATE = os.path.join(BASE_DIR, 'apps/order/app_private_key.pem')
+
+
